@@ -1,0 +1,15 @@
+export const FilterOperators = {
+  EqualTo: '=',
+  Between: 'between',
+  LessThan: '<',
+  LessThanOrEqualTo: '<=',
+  GreaterThan: '>',
+  GreaterThanOrEqualTo: '>=',
+  In: 'in',
+  NotIn: 'notIn',
+  Any: 'any',
+  NotNull: 'notNull',
+  IsNull: 'isNull',
+  NotEqualTo: '!=',
+  Like: 'like',
+};

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "projects": {
+    "api-data": {
+      "type": "library",
+      "root": "libs/api-data",
+      "entryFile": "index",
+      "sourceRoot": "libs/api-data/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/api-data/tsconfig.lib.json"
+      }
+    },
+    "collection-query": {
+      "type": "library",
+      "root": "libs/collection-query",
+      "entryFile": "index",
+      "sourceRoot": "libs/collection-query/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/collection-query/tsconfig.lib.json"
+      }
+    }
+  }
+}
