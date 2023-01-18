@@ -16,6 +16,7 @@ import { Branch } from '../branch/entities/branch.entity';
 import { Product } from '../product/entities/product.entity';
 import { CollectionQuery, Filter, QueryConstructor } from '@chamabet/query';
 import { DataResponseFormat } from '@chamabet/api-data';
+import { CreateNotificationDto } from './dto/create-notification.dto';
 
 @Injectable()
 export class NotificationService {
@@ -24,7 +25,7 @@ export class NotificationService {
     @InjectRepository(NotifyMe)
     private notifyMeRepository: Repository<NotifyMe>,
     @Inject(forwardRef(() => SizeQuantityService))
-    private sizeQuantityService: SizeQuantityService
+    private sizeQuantityService: SizeQuantityService,
   ) {}
 
   async findOne(branch: Branch, product: Product, size: number) {
@@ -45,8 +46,8 @@ export class NotificationService {
 
   async getNotifcations(query: CollectionQuery, notifications = true) {
     try {
-      if (query.includes) {
-        query.includes.concat(['product', 'branch', 'sizeQuantity']);
+      if (notifications) {
+        query.includes = ['product', 'branch'];
       } else {
         query.includes = ['product', 'branch', 'sizeQuantity'];
       }
@@ -62,7 +63,7 @@ export class NotificationService {
   async getNotifcationsByBranch(
     branchId: number,
     query: CollectionQuery,
-    notifications = true
+    notifications = true,
   ) {
     try {
       const filter = new Filter();
@@ -76,8 +77,8 @@ export class NotificationService {
         query.filter = [[filter]];
       }
 
-      if (query.includes) {
-        query.includes.concat(['product', 'sizeQuantity']);
+      if (notifications) {
+        query.includes = ['product'];
       } else {
         query.includes = ['product', 'sizeQuantity'];
       }
@@ -92,7 +93,7 @@ export class NotificationService {
   async getNotifcationsByProduct(
     productId: number,
     query: CollectionQuery,
-    notifications = true
+    notifications = true,
   ) {
     try {
       const filter = new Filter();
@@ -106,11 +107,12 @@ export class NotificationService {
         query.filter = [[filter]];
       }
 
-      if (query.includes) {
-        query.includes.concat(['branch', 'sizeQuantity']);
+      if (notifications) {
+        query.includes = ['branch'];
       } else {
         query.includes = ['branch', 'sizeQuantity'];
       }
+
       return notifications
         ? await this.getQueryNotify(query)
         : await this.getQueryNotifyMe(query);
@@ -119,11 +121,12 @@ export class NotificationService {
     }
   }
 
-  async removeNotifcation(notify: CreateNotifyMeDto) {
+  async removeNotifcation(notify: CreateNotificationDto) {
     const notification = await this.notifyRepository
       .createQueryBuilder('notify')
       .where('notify.product=:id', { id: notify.product.id })
       .andWhere('notify.branch=:branch', { branch: notify.branch.id })
+      .andWhere('notify.size=:size', { size: notify.size })
       .getOne();
     if (notification) {
       return this.notifyRepository.delete(notification.id);
@@ -161,33 +164,13 @@ export class NotificationService {
     // }
   }
 
-  async createNotify(createNotifyDto: CreateNotifyMeDto) {
+  async createNotify(createNotifyDto: CreateNotificationDto) {
     // try {
-    Logger.log('no notifey');
-
-    let notify = await this.notifyRepository
-      .createQueryBuilder('notify')
-      .leftJoinAndSelect('notify.branch', 'branch')
-      .leftJoinAndSelect('notify.product', 'product')
-      .where('notify.branch = :branchId', {
-        branchId: createNotifyDto.branch.id,
-      })
-      .andWhere('notify.product = :productId', {
-        productId: createNotifyDto.product.id,
-      })
-      .getOne();
-    Logger.log('no notifey');
-
-    if (!notify) {
-      notify = await this.notifyRepository.save({
-        ...createNotifyDto,
-        sizeQuantity: undefined,
-      });
-    }
-    createNotifyDto.sizeQuantity.forEach((sq) => {
-      this.sizeQuantityService.createSizeQuantityForNotify(notify, sq);
-    });
-
+    this.notifyRepository.upsert(createNotifyDto, [
+      'branch',
+      'product',
+      'size',
+    ]);
     return createNotifyDto;
     // } catch (error) {
     //   throw new BadRequestException();
@@ -198,7 +181,7 @@ export class NotificationService {
     try {
       const notifications = await QueryConstructor.constructQuery(
         this.notifyRepository,
-        query
+        query,
       ).getManyAndCount();
 
       const response = new DataResponseFormat();
@@ -214,7 +197,7 @@ export class NotificationService {
     try {
       const notifications = await QueryConstructor.constructQuery(
         this.notifyMeRepository,
-        query
+        query,
       ).getManyAndCount();
 
       const response = new DataResponseFormat();

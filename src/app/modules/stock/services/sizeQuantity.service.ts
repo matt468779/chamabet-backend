@@ -21,6 +21,7 @@ import { ProductService } from '../../product/product.service';
 import { create } from 'domain';
 import { NotifyMe } from '../../notification/entities/notifyme.entity';
 import { CreateNotifyMeDto } from '../../notification/dto/create-notifyme.dto';
+import { CreateNotificationDto } from '../../notification/dto/create-notification.dto';
 
 @Injectable()
 export class SizeQuantityService {
@@ -28,14 +29,14 @@ export class SizeQuantityService {
     @InjectRepository(SizeQuantity)
     private readonly sizeQuantityRepository: Repository<SizeQuantity>,
     @Inject(forwardRef(() => NotificationService))
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   async createSizeQuantityForStock(
     product: Product,
     branch: Branch,
     stock: Stock,
-    createSizeQuantity: CreateSizeQuantity
+    createSizeQuantity: CreateSizeQuantity,
   ) {
     try {
       const sq = await this.sizeQuantityRepository
@@ -48,7 +49,7 @@ export class SizeQuantityService {
           product,
           branch,
           createSizeQuantity.size,
-          createSizeQuantity.quantity
+          createSizeQuantity.quantity,
         );
         return await this.sizeQuantityRepository.save({
           ...createSizeQuantity,
@@ -59,12 +60,12 @@ export class SizeQuantityService {
           product,
           branch,
           createSizeQuantity.size,
-          createSizeQuantity.quantity + sq.quantity
+          createSizeQuantity.quantity + sq.quantity,
         );
         return await this.sizeQuantityRepository.increment(
           { stock: stock, size: createSizeQuantity.size },
           'quantity',
-          createSizeQuantity.quantity
+          createSizeQuantity.quantity,
         );
       }
     } catch (error) {
@@ -74,7 +75,7 @@ export class SizeQuantityService {
 
   async createSizeQuantityForAssignment(
     assignment: Assignment,
-    createSizeQuantity: CreateSizeQuantity
+    createSizeQuantity: CreateSizeQuantity,
   ) {
     try {
       const sq = await this.sizeQuantityRepository
@@ -88,10 +89,10 @@ export class SizeQuantityService {
           ...createSizeQuantity,
           assignment: assignment,
         });
-      } else { 
+      } else {
         return await this.sizeQuantityRepository.update(
           sq.id,
-          createSizeQuantity
+          createSizeQuantity,
         );
       }
     } catch (error) {
@@ -101,7 +102,7 @@ export class SizeQuantityService {
 
   async createSizeQuantityForSale(
     sale: Sale,
-    createSizeQuantity: CreateSizeQuantity
+    createSizeQuantity: CreateSizeQuantity,
   ) {
     try {
       const sq = await this.sizeQuantityRepository
@@ -118,7 +119,7 @@ export class SizeQuantityService {
       } else {
         return await this.sizeQuantityRepository.update(
           sq.id,
-          createSizeQuantity
+          createSizeQuantity,
         );
       }
     } catch (error) {
@@ -128,34 +129,35 @@ export class SizeQuantityService {
 
   async createSizeQuantityForNotify(
     notify: Notify,
-    createSizeQuantity: CreateSizeQuantity
+    createSizeQuantity: CreateSizeQuantity,
   ) {
-    try {
-      const sq = await this.sizeQuantityRepository
-        .createQueryBuilder('sizeQuantity')
-        .where('sizeQuantity.notify=:id', { id: notify.id })
-        .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
-        .getOne();
+    // try {
+    const sq = await this.sizeQuantityRepository
+      .createQueryBuilder('sizeQuantity')
+      .where('sizeQuantity.notify=:id', { id: notify.id })
+      .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
+      .getOne();
 
-      if (!sq) {
-        return await this.sizeQuantityRepository.save({
-          ...createSizeQuantity,
-          notify: notify,
-        });
-      } else {
-        return await this.sizeQuantityRepository.update(
-          sq.id,
-          createSizeQuantity
-        );
-      }
-    } catch (error) {
-      throw new BadRequestException();
+    if (!sq) {
+      return await this.sizeQuantityRepository.save({
+        ...createSizeQuantity,
+        notify: notify,
+      });
+    } else {
+      return await this.sizeQuantityRepository.update(
+        sq.id,
+        createSizeQuantity,
+      );
     }
+    // } catch (error) {
+    //   Logger.log('please why');
+    //   throw new BadRequestException();
+    // }
   }
 
   async createSizeQuantityForNotifyMe(
     notifyme: NotifyMe,
-    createSizeQuantity: CreateSizeQuantity
+    createSizeQuantity: CreateSizeQuantity,
   ) {
     // try {
     const sq = await this.sizeQuantityRepository
@@ -172,7 +174,7 @@ export class SizeQuantityService {
     } else {
       return await this.sizeQuantityRepository.update(
         sq.id,
-        createSizeQuantity
+        createSizeQuantity,
       );
     }
     // } catch (error) {
@@ -192,18 +194,29 @@ export class SizeQuantityService {
     }
   }
 
+  async findOneProduct(notify: Notify) {
+    try {
+      return await this.sizeQuantityRepository
+        .createQueryBuilder('sizeQuantity')
+        .where('sizeQuantity.notify=:id', { id: notify.id })
+        .getOne();
+    } catch (error) {
+      throw new BadRequestException();
+    }
+  }
+
   async decrement(
     product: Product,
     branch: Branch,
     updateSizeQuantityDto: UpdateSizeQuantityDto,
-    originalQuantity: number
+    originalQuantity: number,
   ) {
     try {
       this.checkNotification(
         product,
         branch,
         updateSizeQuantityDto.size,
-        originalQuantity - updateSizeQuantityDto.quantity
+        originalQuantity - updateSizeQuantityDto.quantity,
       );
       return await this.sizeQuantityRepository.decrement(
         {
@@ -211,40 +224,46 @@ export class SizeQuantityService {
           size: updateSizeQuantityDto.size,
         },
         'quantity',
-        updateSizeQuantityDto.quantity
+        updateSizeQuantityDto.quantity,
       );
     } catch (error) {
       throw new BadRequestException();
     }
   }
 
+  removeNotification(notify: Notify, size: number) {
+    return this.sizeQuantityRepository
+      .createQueryBuilder('sizeQuantity')
+      .where('sizeQuantity.notify=:id', { id: notify.id })
+      .andWhere('sizeQuantity.size=:size', { size: size })
+      .delete();
+  }
+
   async checkNotification(
     product: Product,
     branch: Branch,
     size: number,
-    updated: number
+    updated: number,
   ) {
-    const notify = new CreateNotifyMeDto();
+    const notify = new CreateNotificationDto();
     notify.product = product;
     notify.branch = branch;
-    const sq = new SizeQuantity();
-    sq.size = size;
-    sq.quantity = updated;
-    notify.sizeQuantity = [sq];
-    const sizeQuantity = await this.notificationService.findOne(
+    notify.size = size;
+    notify.quantity = updated;
+
+    const sizeQuantityToNotifyBefore = await this.notificationService.findOne(
       branch,
       product,
-      size
+      size,
     );
     let q = -1;
-    if (sizeQuantity) {
-      q = sizeQuantity.sizeQuantity[0].quantity;
+    if (sizeQuantityToNotifyBefore) {
+      q = sizeQuantityToNotifyBefore.sizeQuantity[0].quantity;
     }
 
     if (updated < q) {
       this.notificationService.createNotify(notify);
     } else {
-      Logger.log('enough');
       this.notificationService.removeNotifcation(notify);
     }
   }

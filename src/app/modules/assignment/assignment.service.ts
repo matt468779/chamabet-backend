@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assignment } from './entities/assignment.entity';
@@ -16,6 +17,8 @@ import { BranchService } from '../branch/branch.service';
 import { CreateStockDto } from '../stock/dto/create-stock.dto';
 import { DataResponseFormat } from '@chamabet/api-data';
 import { CollectionQuery, Filter, QueryConstructor } from '@chamabet/query';
+import { SizeQuantity } from '../stock/entities/sizeQuantity.entity';
+import { CreateSizeQuantity } from '../stock/dto/create-size-quantity';
 
 @Injectable()
 export class AssignmentService {
@@ -26,37 +29,43 @@ export class AssignmentService {
     private assignmentRepository: Repository<Assignment>,
     private stockService: StockService,
     private sizeQuantityService: SizeQuantityService,
-    private branchService: BranchService
+    private branchService: BranchService,
   ) {}
-  async create(createAssignmentDto: CreateAssignmentDto) {
+  async create(createAssignmentDtos: CreateAssignmentDto[]) {
     try {
-      if (
-        (await this.stockService.transfer(
-          createAssignmentDto.source,
-          createAssignmentDto.destination,
-          createAssignmentDto.product,
-          createAssignmentDto.sizeQuantity
-        )) != null
-      ) {
+      createAssignmentDtos.forEach(async (createAssignmentDto) => {
+        if (
+          (await this.stockService.transfer(
+            createAssignmentDto.source,
+            createAssignmentDto.destination,
+            createAssignmentDto.product,
+            createAssignmentDto.sizeQuantity,
+          )) == null
+        ) {
+          throw HttpException.createBody(
+            'Not enough product in source',
+            "The source branch doesn't have enough product to transer",
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      });
+      let assignments = [];
+      createAssignmentDtos.forEach(async (createAssignmentDto) => {
         const createAssignment =
           this.assignmentRepository.create(createAssignmentDto);
         const assignment = await this.assignmentRepository.save(
-          createAssignmentDto
+          createAssignmentDto,
         );
         createAssignmentDto.sizeQuantity.forEach((sq) => {
           this.sizeQuantityService.createSizeQuantityForAssignment(
             assignment,
-            sq
+            sq,
           );
         });
-        return createAssignment;
-      } else {
-        throw HttpException.createBody(
-          'Not enough product in source',
-          "The source branch doesn't have enough product to transer",
-          HttpStatus.BAD_REQUEST
-        );
-      }
+        assignments.push(createAssignment);
+      });
+
+      return assignments;
     } catch (error) {
       throw new BadRequestException();
     }
@@ -65,7 +74,8 @@ export class AssignmentService {
   async addProductsToStore(assignments: CreateAssignmentDto[]) {
     const store = await this.branchService.getStore();
     let stock: CreateStockDto;
-    assignments.forEach((assignment) => {
+    let results = [];
+    for (let assignment of assignments) {
       assignment.source = store;
       assignment.destination = store;
 
@@ -73,9 +83,49 @@ export class AssignmentService {
       stock.branch = store;
       stock.product = assignment.product;
       stock.sizeQuantity = assignment.sizeQuantity;
-      this.assignmentRepository.save(assignment);
+
+      let res = await this.assignmentRepository.save(assignment);
+      results.push(res);
+
       this.stockService.create(stock);
-    });
+    }
+    return results;
+  }
+
+  async deprecate(assignments: CreateAssignmentDto[]) {
+    const store = await this.branchService.getStore();
+    let stock: CreateStockDto;
+    const results: Assignment[] = [];
+    for (let assignment of assignments) {
+      assignment.source = store;
+      assignment.destination = store;
+
+      stock = new CreateStockDto();
+      stock.branch = store;
+      stock.product = assignment.product;
+      stock.sizeQuantity = [];
+      assignment.sizeQuantity.map((item) => {
+        let sq = new SizeQuantity();
+        sq.size = item.size;
+        sq.quantity = item.quantity;
+        stock.sizeQuantity.push(sq);
+      });
+
+      this.stockService.subtract(stock);
+
+      assignment.sizeQuantity.forEach((assign) => {
+        assign.quantity = -assign.quantity;
+      });
+      let res: Assignment = await this.assignmentRepository.save(assignment);
+      assignment.sizeQuantity.forEach((sizeQuantity) => {
+        this.sizeQuantityService.createSizeQuantityForAssignment(
+          res,
+          sizeQuantity,
+        );
+      });
+      results.push(res);
+    }
+    return results;
   }
 
   async findAll() {
@@ -186,20 +236,20 @@ export class AssignmentService {
         assignment.destination,
         assignment.source,
         assignment.product,
-        assignment.sizeQuantity
+        assignment.sizeQuantity,
       );
       if (
         (await this.stockService.transfer(
           updateAssignmentDto.source,
           updateAssignmentDto.destination,
           updateAssignmentDto.product,
-          updateAssignmentDto.sizeQuantity
+          updateAssignmentDto.sizeQuantity,
         )) != null
       ) {
         updateAssignmentDto.sizeQuantity.forEach(async (sq) => {
           this.sizeQuantityService.createSizeQuantityForAssignment(
             assignment,
-            sq
+            sq,
           );
         });
         const upd: UpdateAssignmentDto = {
@@ -212,13 +262,13 @@ export class AssignmentService {
           assignment.source,
           assignment.destination,
           assignment.product,
-          assignment.sizeQuantity
+          assignment.sizeQuantity,
         );
 
         throw HttpException.createBody(
           'Not enough product in source',
           "The source branch doesn't have enough product to transer. Assignment restored to previous.",
-          HttpStatus.BAD_REQUEST
+          HttpStatus.BAD_REQUEST,
         );
       }
     } catch (error) {
@@ -233,7 +283,7 @@ export class AssignmentService {
         assignment.destination,
         assignment.source,
         assignment.product,
-        assignment.sizeQuantity
+        assignment.sizeQuantity,
       );
 
       return this.assignmentRepository.delete(id);
@@ -251,7 +301,7 @@ export class AssignmentService {
     try {
       const assignments = await QueryConstructor.constructQuery(
         this.assignmentRepository,
-        query
+        query,
       ).getMany();
 
       const response = new DataResponseFormat();
@@ -289,7 +339,7 @@ export class AssignmentService {
       // if (query.includes) {
       //   query.includes = [...query.includes, 'source', 'product'];
       // } else {
-        query.includes = ['source', 'product', 'destination', 'sizeQuantity'];
+      query.includes = ['source', 'product', 'destination', 'sizeQuantity'];
       // }
       const sales = await this.getQuery(query);
       sales.data.forEach((element: Assignment) => {

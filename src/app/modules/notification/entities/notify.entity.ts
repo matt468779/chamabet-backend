@@ -3,14 +3,14 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
 import { Product } from '../../product/entities/product.entity';
 import { Branch } from '../../branch/entities/branch.entity';
 import { SizeQuantity } from '../../stock/entities/sizeQuantity.entity';
-@Unique(['branch', 'product'])
-
+@Unique(['branch', 'product', 'size'])
 @Entity()
 export class Notify {
   @PrimaryGeneratedColumn()
@@ -26,6 +26,9 @@ export class Notify {
   })
   branch: Branch;
 
-  @OneToMany(() => SizeQuantity, (sizeQuantity) => sizeQuantity.notify)
-  sizeQuantity: SizeQuantity[];
+  @Column()
+  size: number;
+
+  @Column()
+  quantity: number;
 }

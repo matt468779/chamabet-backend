@@ -36,11 +36,6 @@ export class SizeQuantity {
   @ManyToOne(() => Sale, (sale) => sale.sizeQuantity, { onDelete: 'CASCADE' })
   sale: Sale;
 
-  @ManyToOne(() => Notify, (notify) => notify.sizeQuantity, {
-    onDelete: 'CASCADE',
-  })
-  notify: Notify;
-
   @ManyToOne(() => NotifyMe, (notifyme) => notifyme.sizeQuantity)
   notifyme: NotifyMe;
 }

@@ -14,7 +14,6 @@ import { UpdateAssignmentDto } from './dto/update-assignment.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CollectionQuery } from '@chamabet/query';
 
-
 @ApiBearerAuth()
 @ApiTags('assignment')
 @Controller('assignment')
@@ -22,13 +21,18 @@ export class AssignmentController {
   constructor(private assignmentService: AssignmentService) {}
 
   @Post('create-assignment')
-  create(@Body() createAssignmentDto: CreateAssignmentDto) {
+  create(@Body() createAssignmentDto: CreateAssignmentDto[]) {
     return this.assignmentService.create(createAssignmentDto);
   }
 
   @Post('add-to-store')
   addProductsToStore(@Body() createAssignmentDto: CreateAssignmentDto[]) {
     return this.assignmentService.addProductsToStore(createAssignmentDto);
+  }
+
+  @Post('deprecate')
+  deprecate(@Body() createAssignmentDto: CreateAssignmentDto[]) {
+    return this.assignmentService.deprecate(createAssignmentDto);
   }
 
   @Get('get-assignments')
@@ -63,7 +67,7 @@ export class AssignmentController {
   @Patch('update-assignment/:id')
   update(
     @Param('id') id: string,
-    @Body() updateAssignmentDto: UpdateAssignmentDto
+    @Body() updateAssignmentDto: UpdateAssignmentDto,
   ) {
     return this.assignmentService.update(+id, updateAssignmentDto);
   }
