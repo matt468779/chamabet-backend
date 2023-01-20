@@ -208,4 +208,33 @@ export class NotificationService {
       throw new BadRequestException();
     }
   }
+
+  async checkNotification(
+    product: Product,
+    branch: Branch,
+    size: number,
+    updated: number,
+  ) {
+    const notify = new CreateNotificationDto();
+    notify.product = product;
+    notify.branch = branch;
+    notify.size = size;
+    notify.quantity = updated;
+
+    const sizeQuantityToNotifyBefore = await this.findOne(
+      branch,
+      product,
+      size,
+    );
+    let q = -1;
+    if (sizeQuantityToNotifyBefore) {
+      q = sizeQuantityToNotifyBefore.sizeQuantity[0].quantity;
+    }
+
+    if (updated < q) {
+      this.createNotify(notify);
+    } else {
+      this.removeNotifcation(notify);
+    }
+  }
 }

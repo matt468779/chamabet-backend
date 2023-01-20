@@ -45,7 +45,7 @@ export class SizeQuantityService {
         .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
         .getOne();
       if (sq == null) {
-        this.checkNotification(
+        this.notificationService.checkNotification(
           product,
           branch,
           createSizeQuantity.size,
@@ -56,7 +56,7 @@ export class SizeQuantityService {
           stock: stock,
         });
       } else {
-        this.checkNotification(
+        this.notificationService.checkNotification(
           product,
           branch,
           createSizeQuantity.size,
@@ -212,7 +212,7 @@ export class SizeQuantityService {
     originalQuantity: number,
   ) {
     try {
-      this.checkNotification(
+      this.notificationService.checkNotification(
         product,
         branch,
         updateSizeQuantityDto.size,
@@ -237,34 +237,5 @@ export class SizeQuantityService {
       .where('sizeQuantity.notify=:id', { id: notify.id })
       .andWhere('sizeQuantity.size=:size', { size: size })
       .delete();
-  }
-
-  async checkNotification(
-    product: Product,
-    branch: Branch,
-    size: number,
-    updated: number,
-  ) {
-    const notify = new CreateNotificationDto();
-    notify.product = product;
-    notify.branch = branch;
-    notify.size = size;
-    notify.quantity = updated;
-
-    const sizeQuantityToNotifyBefore = await this.notificationService.findOne(
-      branch,
-      product,
-      size,
-    );
-    let q = -1;
-    if (sizeQuantityToNotifyBefore) {
-      q = sizeQuantityToNotifyBefore.sizeQuantity[0].quantity;
-    }
-
-    if (updated < q) {
-      this.notificationService.createNotify(notify);
-    } else {
-      this.notificationService.removeNotifcation(notify);
-    }
   }
 }

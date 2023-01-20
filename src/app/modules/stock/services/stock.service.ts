@@ -18,13 +18,13 @@ export class StockService {
   constructor(
     @InjectRepository(Stock)
     private readonly stockRepository: Repository<Stock>,
-    private readonly sizeQuantityService: SizeQuantityService
+    private readonly sizeQuantityService: SizeQuantityService,
   ) {}
   async create(createStockDto: CreateStockDto) {
     // try {
     let stock: Stock = await this.findOne(
       createStockDto.branch,
-      createStockDto.product
+      createStockDto.product,
     );
     if (!stock) {
       stock = this.stockRepository.create({
@@ -38,7 +38,7 @@ export class StockService {
         createStockDto.product,
         stock.branch,
         stock,
-        sq
+        sq,
       );
     });
 
@@ -88,7 +88,7 @@ export class StockService {
           createStockDto.product,
           stock.branch,
           updateSq,
-          sizeQuantity[sq.size]
+          sizeQuantity[sq.size],
         );
       });
       return true;
@@ -152,7 +152,7 @@ export class StockService {
 
       const stock = await QueryConstructor.constructQuery(
         this.stockRepository,
-        query
+        query,
       ).getManyAndCount();
 
       const response = new DataResponseFormat();
@@ -190,7 +190,7 @@ export class StockService {
 
       const stock = await QueryConstructor.constructQuery(
         this.stockRepository,
-        query
+        query,
       ).getManyAndCount();
 
       const response = new DataResponseFormat();
@@ -208,7 +208,7 @@ export class StockService {
         .createQueryBuilder('stock')
         .innerJoin('stock.branch', 'branch')
         .innerJoin('stock.product', 'product')
-        .innerJoin('stock.sizeQuantity', 'sizeQuantity')
+        .leftJoinAndSelect('stock.sizeQuantity', 'sizeQuantity')
         .where('stock.product = :productId', { productId })
         .where('stock.branch = :branchId', { branchId })
         .where('stock.sizeQuantity.size = :size', { size })
@@ -258,7 +258,7 @@ export class StockService {
     source: Branch,
     destination: Branch,
     product: Product,
-    sizeQuantity: SizeQuantity[]
+    sizeQuantity: SizeQuantity[],
   ) {
     try {
       const sourceBranch = new CreateStockDto();
@@ -282,7 +282,7 @@ export class StockService {
     try {
       const products = await QueryConstructor.constructQuery(
         this.stockRepository,
-        query
+        query,
       ).getMany();
 
       const response = new DataResponseFormat();
