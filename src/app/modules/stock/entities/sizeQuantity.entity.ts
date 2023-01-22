@@ -11,6 +11,7 @@ import { Assignment } from '../../assignment/entities/assignment.entity';
 import { Sale } from '../../sale/entities/sale.entity';
 import { Notify } from '../../notification/entities/notify.entity';
 import { NotifyMe } from '../../notification/entities/notifyme.entity';
+import { Deprecate } from '../../deprecate/entities/deprecate.entity';
 
 @Entity()
 export class SizeQuantity {
@@ -38,4 +39,9 @@ export class SizeQuantity {
 
   @ManyToOne(() => NotifyMe, (notifyme) => notifyme.sizeQuantity)
   notifyme: NotifyMe;
+
+  @ManyToOne(() => Deprecate, (deprecate) => deprecate.sizeQuantity, {
+    onDelete: 'CASCADE',
+  })
+  deprecate: Deprecate;
 }

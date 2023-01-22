@@ -24,6 +24,8 @@ import { SizeQuantity } from './modules/stock/entities/sizeQuantity.entity';
 import { NotifyMe } from './modules/notification/entities/notifyme.entity';
 import { NotificationModule } from './modules/notification/notification.module';
 import { Notify } from './modules/notification/entities/notify.entity';
+import { Deprecate } from './modules/deprecate/entities/deprecate.entity';
+import { DeprecateModule } from './modules/deprecate/deprecate.module';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { Notify } from './modules/notification/entities/notify.entity';
     EmailModule,
     SaleModule,
     NotificationModule,
+    DeprecateModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'upload/products'),
       serveRoot: '/upload/products',
@@ -61,6 +64,7 @@ import { Notify } from './modules/notification/entities/notify.entity';
           SizeQuantity,
           Notify,
           NotifyMe,
+          Deprecate,
         ],
         synchronize: true,
       }),

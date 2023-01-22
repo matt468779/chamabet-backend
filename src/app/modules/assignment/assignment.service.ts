@@ -92,7 +92,7 @@ export class AssignmentService {
     return results;
   }
 
-  async deprecate(assignments: CreateAssignmentDto[]) {
+  async subtractFromStore(assignments: CreateAssignmentDto[]) {
     const store = await this.branchService.getStore();
     let stock: CreateStockDto;
     const results: Assignment[] = [];

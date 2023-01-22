@@ -30,9 +30,9 @@ export class AssignmentController {
     return this.assignmentService.addProductsToStore(createAssignmentDto);
   }
 
-  @Post('deprecate')
+  @Post('subtract-from-store')
   deprecate(@Body() createAssignmentDto: CreateAssignmentDto[]) {
-    return this.assignmentService.deprecate(createAssignmentDto);
+    return this.assignmentService.subtractFromStore(createAssignmentDto);
   }
 
   @Get('get-assignments')

@@ -22,6 +22,7 @@ import { create } from 'domain';
 import { NotifyMe } from '../../notification/entities/notifyme.entity';
 import { CreateNotifyMeDto } from '../../notification/dto/create-notifyme.dto';
 import { CreateNotificationDto } from '../../notification/dto/create-notification.dto';
+import { Deprecate } from '../../deprecate/entities/deprecate.entity';
 
 @Injectable()
 export class SizeQuantityService {
@@ -115,6 +116,33 @@ export class SizeQuantityService {
         return await this.sizeQuantityRepository.save({
           ...createSizeQuantity,
           sale: sale,
+        });
+      } else {
+        return await this.sizeQuantityRepository.update(
+          sq.id,
+          createSizeQuantity,
+        );
+      }
+    } catch (error) {
+      throw new BadRequestException();
+    }
+  }
+
+  async createSizeQuantityForDeprecate(
+    deprecate: Deprecate,
+    createSizeQuantity: CreateSizeQuantity,
+  ) {
+    try {
+      const sq = await this.sizeQuantityRepository
+        .createQueryBuilder('sizeQuantity')
+        .where('sizeQuantity.deprecate=:id', { id: deprecate.id })
+        .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
+        .getOne();
+
+      if (!sq) {
+        return await this.sizeQuantityRepository.save({
+          ...createSizeQuantity,
+          deprecate: deprecate,
         });
       } else {
         return await this.sizeQuantityRepository.update(

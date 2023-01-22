@@ -13,11 +13,11 @@ import { CollectionQuery, QueryConstructor, Filter } from '@chamabet/query';
 @Injectable()
 export class SaleService {
   totalQuantity: { [key: string]: any } = {};
-  totalItems=0
+  totalItems = 0;
   constructor(
     @InjectRepository(Sale) private saleRepository: Repository<Sale>,
     private stockService: StockService,
-    private sizeQuantityService: SizeQuantityService
+    private sizeQuantityService: SizeQuantityService,
   ) {}
 
   async create(createSaleDtos: CreateSaleDto[]) {
@@ -34,7 +34,7 @@ export class SaleService {
           await this.saleRepository.save(sale);
         } else {
           throw new BadRequestException(
-            "The branch doesn't have enough product to sell"
+            "The branch doesn't have enough product to sell",
           );
         }
       });
@@ -59,8 +59,9 @@ export class SaleService {
         });
         return this.findOne(id);
       } else {
+        await this.stockService.subtract(sale);
         throw new BadRequestException(
-          "The branch doesn't have enough product to sell"
+          "The branch doesn't have enough product to sell",
         );
       }
     } catch (error) {
@@ -82,7 +83,7 @@ export class SaleService {
     try {
       const sales = await QueryConstructor.constructQuery(
         this.saleRepository,
-        query
+        query,
       ).getMany();
 
       const response = new DataResponseFormat();
@@ -197,7 +198,7 @@ export class SaleService {
   //For report
   async findAllReport(query) {
     this.totalQuantity = {};
-    this.totalItems=0
+    this.totalItems = 0;
     try {
       if (query.includes) {
         query.includes = [...query.includes, 'branch', 'product'];
@@ -207,7 +208,7 @@ export class SaleService {
       const sales = await this.getQuery(query);
       sales.data.forEach((element: Sale) => {
         element.sizeQuantity.forEach((item) => {
-          this.totalItems+=item.quantity
+          this.totalItems += item.quantity;
           if (this.totalQuantity[item.size]) {
             this.totalQuantity[item.size] += item.quantity;
           } else {
@@ -215,7 +216,7 @@ export class SaleService {
           }
         });
       });
-      this.totalQuantity['Total']=this.totalItems
+      this.totalQuantity['Total'] = this.totalItems;
 
       console.log('quantity', this.totalQuantity);
       console.log('sales ', sales);
@@ -224,7 +225,6 @@ export class SaleService {
         data: sales.data,
         count: sales.count,
         sizeTotal: this.totalQuantity,
-      
       };
     } catch (error) {
       throw new BadRequestException();
