@@ -293,20 +293,25 @@ export class AssignmentService {
   }
 
   async getQuery(query: CollectionQuery) {
-    // if (query.includes) {
-    //   query.includes = [...query.includes, 'branch', 'product'];
-    // } else {
-    //   query.includes = ['source', 'product','destination'];
-    // }
+    const filter3 = new Filter();
+    filter3.field = 'sizeQuantity.quantity';
+    filter3.operator = '>';
+    filter3.value = 0;
+
+    if (query.filter) {
+      query.filter = query.filter.concat([[filter3]]);
+    } else {
+      query.filter = [[filter3]];
+    }
     try {
       const assignments = await QueryConstructor.constructQuery(
         this.assignmentRepository,
         query,
-      ).getMany();
+      ).getManyAndCount();
 
       const response = new DataResponseFormat();
-      response.data = assignments;
-      response.count = await this.assignmentRepository.count();
+      response.data = assignments[0];
+      response.count = await assignments[1];
       return response;
     } catch (error) {
       throw new BadRequestException();
