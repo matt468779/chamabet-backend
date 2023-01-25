@@ -85,17 +85,13 @@ export class SizeQuantityService {
         .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
         .getOne();
 
-      if (!sq) {
-        return await this.sizeQuantityRepository.save({
-          ...createSizeQuantity,
-          assignment: assignment,
-        });
-      } else {
-        return await this.sizeQuantityRepository.update(
-          sq.id,
-          createSizeQuantity,
-        );
+      if (sq) {
+        this.sizeQuantityRepository.delete(sq.id);
       }
+      return await this.sizeQuantityRepository.save({
+        ...createSizeQuantity,
+        assignment: assignment,
+      });
     } catch (error) {
       throw new BadRequestException();
     }
@@ -111,18 +107,13 @@ export class SizeQuantityService {
         .where('sizeQuantity.sale=:id', { id: sale.id })
         .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
         .getOne();
-
-      if (!sq) {
-        return await this.sizeQuantityRepository.save({
-          ...createSizeQuantity,
-          sale: sale,
-        });
-      } else {
-        return await this.sizeQuantityRepository.update(
-          sq.id,
-          createSizeQuantity,
-        );
+      if (sq) {
+        this.sizeQuantityRepository.delete(sq.id);
       }
+      return await this.sizeQuantityRepository.save({
+        ...createSizeQuantity,
+        sale: sale,
+      });
     } catch (error) {
       throw new BadRequestException();
     }
@@ -138,18 +129,13 @@ export class SizeQuantityService {
         .where('sizeQuantity.deprecate=:id', { id: deprecate.id })
         .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
         .getOne();
-
-      if (!sq) {
-        return await this.sizeQuantityRepository.save({
-          ...createSizeQuantity,
-          deprecate: deprecate,
-        });
-      } else {
-        return await this.sizeQuantityRepository.update(
-          sq.id,
-          createSizeQuantity,
-        );
+      if (sq) {
+        this.sizeQuantityRepository.delete(sq.id);
       }
+      return await this.sizeQuantityRepository.save({
+        ...createSizeQuantity,
+        deprecate: deprecate,
+      });
     } catch (error) {
       throw new BadRequestException();
     }
@@ -159,55 +145,44 @@ export class SizeQuantityService {
     notify: Notify,
     createSizeQuantity: CreateSizeQuantity,
   ) {
-    // try {
-    const sq = await this.sizeQuantityRepository
-      .createQueryBuilder('sizeQuantity')
-      .where('sizeQuantity.notify=:id', { id: notify.id })
-      .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
-      .getOne();
-
-    if (!sq) {
+    try {
+      const sq = await this.sizeQuantityRepository
+        .createQueryBuilder('sizeQuantity')
+        .where('sizeQuantity.notify=:id', { id: notify.id })
+        .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
+        .getOne();
+      if (sq) {
+        this.sizeQuantityRepository.delete(sq.id);
+      }
       return await this.sizeQuantityRepository.save({
         ...createSizeQuantity,
         notify: notify,
       });
-    } else {
-      return await this.sizeQuantityRepository.update(
-        sq.id,
-        createSizeQuantity,
-      );
+    } catch (error) {
+      throw new BadRequestException();
     }
-    // } catch (error) {
-    //   Logger.log('please why');
-    //   throw new BadRequestException();
-    // }
   }
 
   async createSizeQuantityForNotifyMe(
     notifyme: NotifyMe,
     createSizeQuantity: CreateSizeQuantity,
   ) {
-    // try {
-    const sq = await this.sizeQuantityRepository
-      .createQueryBuilder('sizeQuantity')
-      .where('sizeQuantity.notifyme=:id', { id: notifyme.id })
-      .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
-      .getOne();
-
-    if (!sq) {
+    try {
+      const sq = await this.sizeQuantityRepository
+        .createQueryBuilder('sizeQuantity')
+        .where('sizeQuantity.notifyme=:id', { id: notifyme.id })
+        .andWhere('sizeQuantity.size=:size', { size: createSizeQuantity.size })
+        .getOne();
+      if (sq) {
+        this.sizeQuantityRepository.delete(sq.id);
+      }
       return await this.sizeQuantityRepository.save({
         ...createSizeQuantity,
         notifyme: notifyme,
       });
-    } else {
-      return await this.sizeQuantityRepository.update(
-        sq.id,
-        createSizeQuantity,
-      );
+    } catch (error) {
+      throw new BadRequestException();
     }
-    // } catch (error) {
-    //   throw new BadRequestException();
-    // }
   }
 
   async findOne(stock: Stock, size: number) {
