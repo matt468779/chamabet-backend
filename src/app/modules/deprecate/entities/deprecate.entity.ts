@@ -14,16 +14,19 @@ export class Deprecate {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Product, (product) => product.assignment, {
+  @ManyToOne(() => Branch, (branch) => branch.deprecate, {
+    onDelete: 'CASCADE',
+  })
+  branch: Branch;
+
+  @ManyToOne(() => Product, (product) => product.deprecate, {
     onDelete: 'CASCADE',
   })
   product: Product;
 
-  @OneToMany(() => SizeQuantity, (sizeQuantity) => sizeQuantity.deprecate, {
-    onDelete: 'CASCADE',
-  })
+  @OneToMany(() => SizeQuantity, (sizeQuantity) => sizeQuantity.deprecate)
   sizeQuantity: SizeQuantity[];
 
   @Column({ type: 'date', default: () => 'NOW()' })
-  date: string;
+  date: Date;
 }

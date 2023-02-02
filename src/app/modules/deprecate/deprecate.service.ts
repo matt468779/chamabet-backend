@@ -22,46 +22,45 @@ export class DeprecateService {
   ) {}
 
   async create(createDeprecateDtos: CreateDeprecateDto[]) {
-    const store = await this.branchService.getStore();
-    try {
-      createDeprecateDtos.forEach(async (createDeprecateDto) => {
-        if (
-          await this.stockService.subtract({
-            ...createDeprecateDto,
-            branch: store,
-          })
-        ) {
-          const deprecate = await this.deprecateRepository.save({
-            ...createDeprecateDto,
-            sizeQuantity: undefined,
-          });
-          createDeprecateDto.sizeQuantity.forEach((sq) => {
-            this.sizeQuantityService.createSizeQuantityForDeprecate(
-              deprecate,
-              sq,
-            );
-          });
-          await this.deprecateRepository.save(deprecate);
-        } else {
-          throw new BadRequestException(
-            "The branch doesn't have enough product to sell",
+    // try {
+    createDeprecateDtos.forEach(async (createDeprecateDto) => {
+      if (
+        await this.stockService.subtract({
+          ...createDeprecateDto,
+          branch: createDeprecateDto.branch,
+        })
+      ) {
+        const deprecate = await this.deprecateRepository.save({
+          ...createDeprecateDto,
+          sizeQuantity: undefined,
+        });
+        createDeprecateDto.sizeQuantity.forEach((sq) => {
+          this.sizeQuantityService.createSizeQuantityForDeprecate(
+            deprecate,
+            sq,
           );
-        }
-      });
-      return createDeprecateDtos;
-    } catch (error) {
-      throw new BadRequestException();
-    }
+        });
+        await this.deprecateRepository.save(deprecate);
+      } else {
+        throw new BadRequestException(
+          "The branch doesn't have enough product to sell",
+        );
+      }
+    });
+    return createDeprecateDtos;
+    // } catch (error) {
+    //   throw new BadRequestException();
+    // }
   }
 
   findAll(query: CollectionQuery) {
-    query.includes = ['sizeQuantity', 'product'];
+    query.includes = ['sizeQuantity', 'product', 'branch'];
     return this.getQuery(query);
   }
 
   async findByProduct(productId: number, query: CollectionQuery) {
     try {
-      query.includes = ['sizeQuantity'];
+      query.includes = ['sizeQuantity', 'branch'];
       const filter = new Filter();
       filter.field = 'product';
       filter.operator = '=';
@@ -83,6 +82,7 @@ export class DeprecateService {
     try {
       return await this.deprecateRepository
         .createQueryBuilder('deprecate')
+        .leftJoinAndSelect('deprecate.branch', 'branch')
         .leftJoinAndSelect('deprecate.product', 'product')
         .leftJoinAndSelect('deprecate.sizeQuantity', 'sizeQuantity')
         .where('deprecate.id = :id', { id })
@@ -93,46 +93,50 @@ export class DeprecateService {
   }
 
   async update(id: number, updateDeprecateDto: UpdateDeprecateDto) {
-    try {
-      const deprecate: Deprecate = await this.findOne(id);
-      const store = await this.branchService.getStore();
-      const createStockDto: CreateStockDto = { ...deprecate, branch: store };
-      await this.stockService.create(createStockDto);
-      if (
-        await this.stockService.subtract({
-          ...updateDeprecateDto,
-          branch: store,
-        })
-      ) {
-        const updated = await this.deprecateRepository.update(id, {
-          ...updateDeprecateDto,
-          sizeQuantity: undefined,
-        });
-        updateDeprecateDto.sizeQuantity.forEach(async (sq) => {
-          await this.sizeQuantityService.createSizeQuantityForDeprecate(
-            deprecate,
-            sq,
-          );
-        });
-        return this.findOne(id);
-      } else {
-        this.stockService.subtract({
-          ...deprecate,
-          branch: store,
-        });
-        throw new BadRequestException(
-          "The branch doesn't have enough product to deprecate",
+    // try {
+    const deprecate: Deprecate = await this.findOne(id);
+    const createStockDto: CreateStockDto = {
+      ...deprecate,
+      branch: deprecate.branch,
+    };
+    await this.stockService.create(createStockDto);
+    if (
+      await this.stockService.subtract({
+        ...updateDeprecateDto,
+        branch: updateDeprecateDto.branch,
+      })
+    ) {
+      const updated = await this.deprecateRepository.update(id, {
+        ...updateDeprecateDto,
+        sizeQuantity: undefined,
+      });
+      updateDeprecateDto.sizeQuantity.forEach(async (sq) => {
+        await this.sizeQuantityService.createSizeQuantityForDeprecate(
+          deprecate,
+          sq,
         );
-      }
-    } catch (error) {
-      throw new BadRequestException();
+      });
+      return this.findOne(id);
+    } else {
+      this.stockService.subtract({
+        ...deprecate,
+        branch: deprecate.branch,
+      });
+      throw new BadRequestException(
+        "The branch doesn't have enough product to deprecate",
+      );
     }
+    // } catch (error) {
+    //   throw new BadRequestException();
+    // }
   }
 
   async remove(id: number) {
     const deprecate: Deprecate = await this.findOne(id);
-    const store = await this.branchService.getStore();
-    const createStockDto: CreateStockDto = { ...deprecate, branch: store };
+    const createStockDto: CreateStockDto = {
+      ...deprecate,
+      branch: deprecate.branch,
+    };
     await this.stockService.create(createStockDto);
 
     return await this.deprecateRepository.remove(deprecate);

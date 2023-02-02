@@ -10,6 +10,7 @@ import { Stock } from '../../stock/entities/stock.entity';
 import { Assignment } from '../../assignment/entities/assignment.entity';
 import { Sale } from '../../sale/entities/sale.entity';
 import { Notify } from '../../notification/entities/notify.entity';
+import { Deprecate } from '../../deprecate/entities/deprecate.entity';
 
 @Entity()
 export class Branch {
@@ -46,4 +47,9 @@ export class Branch {
 
   @OneToMany(() => Notify, (notify) => notify.branch)
   notify: Notify[];
+
+  @OneToMany(() => Deprecate, (deprecate) => deprecate.branch, {
+    cascade: true,
+  })
+  deprecate: Deprecate[];
 }

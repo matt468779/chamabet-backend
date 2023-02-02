@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Header,
+  Logger,
   Post,
   Request,
   Res,
@@ -21,7 +22,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly emailConfirmationService: EmailConfirmationService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) {}
 
   @UseGuards(LocalAuthGuard)

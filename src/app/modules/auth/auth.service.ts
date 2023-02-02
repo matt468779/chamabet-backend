@@ -13,14 +13,13 @@ import { User } from '../user/entities/user.entity';
 export class AuthService {
   constructor(
     private userService: UserService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
   async validateUser(email: string, pass: string) {
     try {
       const user = await this.userService.findByEmail(email);
-      const hashedPassword = await bcrypt.hash(pass, 10);
-      if (user && bcrypt.compare(hashedPassword, user.password)) {
+      if (user && (await bcrypt.compare(pass, user.password))) {
         const { password, ...result } = user;
         return result;
       }
@@ -42,7 +41,7 @@ export class AuthService {
       } catch (error) {
         throw new HttpException(
           'Something went wrong',
-          HttpStatus.INTERNAL_SERVER_ERROR
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
     } catch (error) {

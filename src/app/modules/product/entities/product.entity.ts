@@ -9,6 +9,7 @@ import { Stock } from '../../stock/entities/stock.entity';
 import { Assignment } from '../../assignment/entities/assignment.entity';
 import { Sale } from '../../sale/entities/sale.entity';
 import { Notify } from '../../notification/entities/notify.entity';
+import { Deprecate } from '../../deprecate/entities/deprecate.entity';
 
 @Unique(['productId'])
 @Entity()
@@ -47,4 +48,7 @@ export class Product {
 
   @OneToMany(() => Notify, (notify) => notify.product)
   notify: Notify[];
+
+  @OneToMany(() => Deprecate, (deprecate) => deprecate.product)
+  deprecate: Deprecate[];
 }
