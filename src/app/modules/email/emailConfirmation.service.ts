@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { EmailService } from './email.service';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
+import * as pug from 'pug';
+import { Response } from 'express';
 
 @Injectable()
 export class EmailConfirmationService {
@@ -10,15 +12,16 @@ export class EmailConfirmationService {
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) {}
 
-  async confirmEmail(email: string) {
+  async confirmEmail(email: string, res: Response) {
     const user = await this.userService.findByEmail(email);
     if (user.isEmailConfirmed) {
       throw new BadRequestException('Email already confirmed');
     }
     await this.userService.markEmailAsConfirmed(email);
+    return res.redirect('http://shoesonlyshop.com/admin/');
   }
 
   async resendConfirmationLink(email: string) {
@@ -52,21 +55,21 @@ export class EmailConfirmationService {
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
       expiresIn: `${this.configService.get(
-        'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME'
+        'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
       )}s`,
     });
 
     const url = `${this.configService.get(
-      'EMAIL_CONFIRMATION_URL'
+      'EMAIL_CONFIRMATION_URL',
     )}?token=${token}`;
-    Logger.log(url);
-    const text = `<strong>Welcome to chamabet<strong>.<br>To confirm click here: ${url}`;
 
-    // return this.emailService.sendMail({
-    //   from: 'mengistusima@gagarian.com',
-    //   to: 'mengistusima@gmail.com',
-    //   subject: 'Chamabet Email confirmation',
-    //   text: text,
-    // });
+    return this.emailService.sendMail({
+      from: 'noreply@shoesonlyshop.com',
+      to: email,
+      subject: 'ShoesOnly Email Confirmation',
+      html: pug.renderFile('./mail/template.pug', {
+        url: url,
+      }),
+    });
   }
 }

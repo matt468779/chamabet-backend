@@ -9,7 +9,7 @@ export class EmailService {
   constructor(configService: ConfigService) {
     this.nodemailerTransport = createTransport({
       host: configService.get('EMAIL_HOST'),
-      port: 2525,
+      port: configService.get('EMAIL_PORT'),
       secure: true,
       auth: {
         user: configService.get('EMAIL_USER'),

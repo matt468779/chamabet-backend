@@ -16,6 +16,8 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { EmailConfirmationService } from '../email/emailConfirmation.service';
 import { UserService } from '../user/user.service';
 import { Response } from 'express';
+import { RoleGuard } from '../role/role.guard';
+import { Role } from '../role/role.enum';
 
 @Controller()
 export class AuthController {
@@ -38,6 +40,7 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @UseGuards(RoleGuard(Role.Admin))
   @Post('user')
   async create(@Body() createUserDto: CreateUserDto) {
     if (!(await this.userService.findByEmail(createUserDto.email))) {

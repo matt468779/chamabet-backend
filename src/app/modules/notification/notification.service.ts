@@ -231,7 +231,7 @@ export class NotificationService {
       q = sizeQuantityToNotifyBefore.sizeQuantity[0].quantity;
     }
 
-    if (updated < q) {
+    if (updated <= q) {
       this.createNotify(notify);
     } else {
       this.removeNotifcation(notify);

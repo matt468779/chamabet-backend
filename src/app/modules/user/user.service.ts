@@ -35,19 +35,19 @@ export class UserService {
     return this.userRepository.findOne({ where: { email: email } });
   }
 
-  async update(username: string, updateUserDto: UpdateUserDto) {
+  async update(email: string, updateUserDto: UpdateUserDto) {
     if (updateUserDto.password) {
       const hash = await bcrypt.hash(updateUserDto.password, 10);
-      return this.userRepository.update(username, {
+      return this.userRepository.update(email, {
         ...updateUserDto,
         password: hash,
       });
     }
-    return this.userRepository.update(username, updateUserDto);
+    return this.userRepository.update(email, updateUserDto);
   }
 
-  remove(username: string) {
-    return this.userRepository.delete(username);
+  remove(email: string) {
+    return this.userRepository.delete(email);
   }
 
   async markEmailAsConfirmed(email: string) {

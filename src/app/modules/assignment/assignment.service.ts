@@ -78,14 +78,17 @@ export class AssignmentService {
     for (let assignment of assignments) {
       assignment.source = store;
       assignment.destination = store;
+      let res = await this.assignmentRepository.save(assignment);
+      results.push(res);
+
+      for (let sq of assignment.sizeQuantity) {
+        this.sizeQuantityService.createSizeQuantityForAssignment(res, sq);
+      }
 
       stock = new CreateStockDto();
       stock.branch = store;
       stock.product = assignment.product;
       stock.sizeQuantity = assignment.sizeQuantity;
-
-      let res = await this.assignmentRepository.save(assignment);
-      results.push(res);
 
       this.stockService.create(stock);
     }
@@ -116,6 +119,7 @@ export class AssignmentService {
       assignment.sizeQuantity.forEach((assign) => {
         assign.quantity = -assign.quantity;
       });
+
       let res: Assignment = await this.assignmentRepository.save(assignment);
       assignment.sizeQuantity.forEach((sizeQuantity) => {
         this.sizeQuantityService.createSizeQuantityForAssignment(

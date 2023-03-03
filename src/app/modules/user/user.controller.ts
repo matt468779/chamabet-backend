@@ -17,6 +17,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { EmailConfirmationService } from '../email/emailConfirmation.service';
 import { EmailConfirmationGuard } from '../email/emailConfirmation.guard';
 import { User } from './entities/user.entity';
+import { RoleGuard } from '../role/role.guard';
+import { Role } from '../role/role.enum';
 
 @Controller('user')
 export class UserController {
@@ -30,21 +32,24 @@ export class UserController {
   }
 
   @Get('query')
-  @UseGuards(EmailConfirmationGuard)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RoleGuard(Role.Admin))
   getAllUsers(@Query() query) {
     return this.userService.getQuery(query);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch('update')
-  update(@Request() req, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(req.user.username, updateUserDto);
+  @UseGuards(RoleGuard(Role.Admin))
+  @Patch('update/:email')
+  update(
+    @Param('email') email: string,
+    @Request() req,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.userService.update(email, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete('delete')
-  remove(@Request() req) {
-    return this.userService.remove(req.user.username);
+  @UseGuards(RoleGuard(Role.Admin))
+  @Delete('delete/:email')
+  remove(@Param('email') email: string, @Request() req) {
+    return this.userService.remove(email);
   }
 }

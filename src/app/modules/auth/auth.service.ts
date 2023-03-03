@@ -19,7 +19,11 @@ export class AuthService {
   async validateUser(email: string, pass: string) {
     try {
       const user = await this.userService.findByEmail(email);
-      if (user && (await bcrypt.compare(pass, user.password))) {
+      if (
+        user &&
+        (await bcrypt.compare(pass, user.password)) &&
+        user.isActivated
+      ) {
         const { password, ...result } = user;
         return result;
       }
@@ -55,6 +59,7 @@ export class AuthService {
         sub: user.email,
         role: user.role,
         isEmailConfirmed: user.isEmailConfirmed,
+        isActivated: user.isActivated,
       };
       return {
         access_token: this.jwtService.sign(payload),

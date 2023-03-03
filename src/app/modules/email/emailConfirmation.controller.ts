@@ -1,24 +1,34 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { EmailConfirmationService } from './emailConfirmation.service';
 import { ConfirmEmailDto } from './dto/confirmEmail.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import RequestWithUser from '../auth/requestWithUser.interface';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 
 @ApiBearerAuth()
 @ApiTags('email-confirmation')
 @Controller('email-confirmation')
 export class EmailConfirmationController {
   constructor(
-    private readonly emailConfirmationService: EmailConfirmationService
+    private readonly emailConfirmationService: EmailConfirmationService,
   ) {}
 
-  @Post()
-  async confirm(@Body() confirmationData: ConfirmEmailDto) {
+  @Get()
+  async confirm(@Query() query, @Res() res: Response) {
     const email = await this.emailConfirmationService.decodeConfirmationToken(
-      confirmationData.token
+      query.token,
     );
-    await this.emailConfirmationService.confirmEmail(email);
+    return await this.emailConfirmationService.confirmEmail(email, res);
   }
 
   @Post('resend-confirmation-link')

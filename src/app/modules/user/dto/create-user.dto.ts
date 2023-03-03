@@ -1,5 +1,5 @@
 import { Unique } from 'typeorm';
-import { IsEmail, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsString } from 'class-validator';
 @Unique(['email'])
 export class CreateUserDto {
   @IsString()
@@ -10,4 +10,6 @@ export class CreateUserDto {
   email: string;
   @IsString()
   password: string;
+  @IsBoolean()
+  isActivated: boolean;
 }
