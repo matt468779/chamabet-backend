@@ -59,7 +59,6 @@ export class UserService {
       this.userRepository,
       query,
     ).getMany();
-
     const response = new DataResponseFormat();
     response.data = products;
     response.count = await this.userRepository.count();
