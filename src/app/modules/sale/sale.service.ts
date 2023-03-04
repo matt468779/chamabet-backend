@@ -206,25 +206,52 @@ export class SaleService {
         query.includes = ['branch', 'product', 'sizeQuantity'];
       }
       const sales = await this.getQuery(query);
+
       sales.data.forEach((element: Sale) => {
+        if (!this.totalQuantity[element.product.productId]) {
+          this.totalQuantity[element.product.productId] = {
+            productId: element.product.productId,
+            size: {},
+          };
+        }
         element.sizeQuantity.forEach((item) => {
           this.totalItems += item.quantity;
-          if (this.totalQuantity[item.size]) {
-            this.totalQuantity[item.size] += item.quantity;
+          if (
+            this.totalQuantity[element.product.productId]['size'][item.size]
+          ) {
+            this.totalQuantity[element.product.productId]['size'][item.size] +=
+              item.quantity;
           } else {
-            this.totalQuantity[item.size] = item.quantity;
+            this.totalQuantity[element.product.productId]['size'][item.size] =
+              item.quantity;
           }
         });
       });
-      this.totalQuantity['Total'] = this.totalItems;
+      this.totalQuantity['total'] = this.totalItems;
 
+      const temp = [];
+      Object.keys(this.totalQuantity).forEach((key) => {
+        if (key !== 'total') {
+          let tempSize = [];
+          Object.keys(this.totalQuantity[key]['size']).forEach((element) => {
+            tempSize = [
+              ...tempSize,
+              {
+                size: element,
+                quantity: this.totalQuantity[key]['size'][element],
+              },
+            ];
+          });
+          temp.push({ ...this.totalQuantity[key], sizeQuantity: tempSize });
+        }
+      });
       console.log('quantity', this.totalQuantity);
-      console.log('sales ', sales);
-
+      console.log('sales ', temp);
       return {
         data: sales.data,
         count: sales.count,
-        sizeTotal: this.totalQuantity,
+        productTotal: temp,
+        sizeTotal: this.totalQuantity['total'],
       };
     } catch (error) {
       throw new BadRequestException();
